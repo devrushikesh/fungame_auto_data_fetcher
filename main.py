@@ -14,11 +14,11 @@ OCR_SPACE_KEY = os.getenv("OCR_SPACE_KEY", "helloworld")  # Use your own key for
 
 
 
-# Initialize Appwrite SDK
-client = Client()
-client.set_endpoint(os.getenv("APPWRITE_FUNCTION_ENDPOINT"))
-client.set_project(os.getenv("APPWRITE_FUNCTION_PROJECT_ID"))
-client.set_key(os.getenv("APPWRITE_FUNCTION_API_KEY")) 
+# Init Appwrite SDK
+client = Client() \
+    .set_endpoint(os.getenv("APPWRITE_FUNCTION_ENDPOINT")) \
+    .set_project(os.getenv("APPWRITE_FUNCTION_PROJECT_ID")) \
+    .set_key(os.getenv("APPWRITE_FUNCTION_API_KEY"))
 storage = Storage(client)
 
 class AuthClient:
@@ -192,39 +192,42 @@ def fetch_and_extract(url, session_id: str):
 
 
 
-def main(req, res):
 
-    print("calling")
-    res.log("ENDPOINT:", os.getenv("APPWRITE_FUNCTION_ENDPOINT"))
-    res.log("PROJECT_ID:", os.getenv("APPWRITE_FUNCTION_PROJECT_ID"))
-    res.log("API_KEY:", os.getenv("APPWRITE_FUNCTION_API_KEY"))
-    # Your existing data-fetch logic
-    authclient = AuthClient()
-    session_id = authclient.get_session_id()
-    fun_client = FunTargetAPIClient(session_id)
+# ... [Include your AuthClient, FunTargetAPIClient, fetch_and_extract logic here] ...
 
-    data = {
-        "fun_target": fun_client.get_fun_target_data(),
-        "fun_roullet": fun_client.get_fun_roullet_data(),
-        "triple_fun": fun_client.get_triple_fun_data(),
-        "fun_ab": fun_client.get_fun_ab_data()
-    }
+def main(context):
+    context.log("Function starting...")
 
-    now = datetime.now().strftime("%Y%m%dT%H%M%SZ")
-    bucket_id = os.getenv("BUCKET_ID")
-    uploaded = []
+    try:
+        authclient = AuthClient()
+        session_id = authclient.get_session_id()
+        fun_client = FunTargetAPIClient(session_id)
 
+        data = {
+            "fun_target": fun_client.get_fun_target_data(),
+            "fun_roullet": fun_client.get_fun_roullet_data(),
+            "triple_fun": fun_client.get_triple_fun_data(),
+            "fun_ab": fun_client.get_fun_ab_data()
+        }
 
-    for key, value in data.items():
-        json_bytes = json.dumps(value, indent=4).encode("utf-8")
-        file_id = f"{key}_{now}.json"
-        result = storage.create_file(
-            bucket_id=bucket_id,
-            file_id=file_id,
-            file=InputFile.from_bytes(json_bytes, file_id, content_type="application/json"),
-            permissions=["read(any)"]
-        )
-        uploaded.append(result["$id"])
-        res.log(f"Uploaded {file_id} -> {result['$id']}")
+        now = datetime.now().strftime("%Y%m%dT%H%M%SZ")
+        bucket_id = os.getenv("BUCKET_ID")
+        uploaded = []
 
-    return res.json({"status": "success", "uploaded": uploaded})
+        for key, value in data.items():
+            json_bytes = json.dumps(value, indent=4).encode("utf-8")
+            file_id = f"{key}_{now}.json"
+            result = storage.create_file(
+                bucket_id=bucket_id,
+                file_id=file_id,
+                file=InputFile.from_bytes(json_bytes, file_id, content_type="application/json"),
+                permissions=["read(any)"]
+            )
+            uploaded.append(result["$id"])
+            context.log(f"Uploaded {file_id} -> {result['$id']}")
+
+        return context.res.json({"status": "success", "uploaded": uploaded})
+
+    except Exception as e:
+        context.error(f"Error: {str(e)}")
+        return context.res.json({"status": "error", "message": str(e)}, 500)
