@@ -10,11 +10,7 @@ from appwrite.input_file import InputFile
 
 
 
-OCR_SPACE_KEY = os.getenv("OCR_SPACE_KEY", "helloworld")  # Use your own key for production
-
-
-
-# Init Appwrite SDK
+# # Init Appwrite SDK
 client = Client() \
     .set_endpoint(os.getenv("APPWRITE_FUNCTION_ENDPOINT")) \
     .set_project(os.getenv("APPWRITE_FUNCTION_PROJECT_ID")) \
@@ -156,9 +152,11 @@ class FunTargetAPIClient:
 
 
 def fetch_and_extract(url, session_id: str):
+    print("called fetch and extract captcha")
     # Download the image with proper session cookie
     resp = requests.get(url, cookies={"ASP.NET_SessionId": session_id})
     resp.raise_for_status()
+
 
     # Prepare file payload with a suggested filename to set content type
     files = {
@@ -166,7 +164,7 @@ def fetch_and_extract(url, session_id: str):
     }
 
     data = {
-        "apikey": OCR_SPACE_KEY,
+        "apikey": "K87096451388957",
         "language": "eng",
         "isOverlayRequired": False,
         "detectOrientation": True,
@@ -177,6 +175,7 @@ def fetch_and_extract(url, session_id: str):
     api_resp = requests.post("https://api.ocr.space/parse/image", files=files, data=data)
     api_resp.raise_for_status()
     result = api_resp.json()
+    print(result)
 
     if result.get("IsErroredOnProcessing"):
         raise RuntimeError(result.get("ErrorMessage", "OCR.space error"))
@@ -203,8 +202,12 @@ def main(context):
         context.log("👉 SessionId:", sid)
 
         fun = FunTargetAPIClient(sid)
-        data = {k: getattr(fun, f"get_{k}_data")()() for k in 
-                ['fun_target', 'fun_roullet', 'triple_fun', 'fun_ab']}
+        data = {
+            "fun_target": fun.get_fun_target_data(),
+            "fun_ab": fun.get_fun_ab_data(),
+            "fun_triple": fun.get_triple_fun_data(),
+            "fun_rollet": fun.get_fun_roullet_data()
+        }
 
         now = datetime.now().strftime("%Y%m%dT%H%M%SZ")
         bucket = os.getenv("BUCKET_ID")
@@ -224,3 +227,25 @@ def main(context):
     except Exception as e:
         context.error("❌ Error occurred:", str(e))
         return context.res.json({"status": "error", "message": str(e)}, 500)
+    
+# if __name__ == "__main__":
+
+#     try:
+#         auth = AuthClient()
+#         sid = auth.get_session_id()
+
+#         fun = FunTargetAPIClient(sid)
+#         data = {
+#             "fun_target": fun.get_fun_target_data(),
+#             "fun_ab": fun.get_fun_ab_data(),
+#             "fun_triple": fun.get_triple_fun_data(),
+#             "fun_rollet": fun.get_fun_roullet_data()
+#         }
+
+#         now = datetime.now().strftime("%Y%m%dT%H%M%SZ")
+#         bucket = os.getenv("BUCKET_ID")
+#         uploaded = []
+#         print(data["fun_target"])
+       
+#     except Exception as e:
+#         print(e)
