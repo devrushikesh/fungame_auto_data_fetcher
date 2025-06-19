@@ -220,7 +220,7 @@ def main(context):
             result = storage.create_file(
                 bucket_id=bucket_id,
                 file_id=file_id,
-                file=InputFile.from_bytes(json_bytes, file_id, content_type="application/json"),
+                file=InputFile.from_bytes(json_bytes, file_id),
                 permissions=["read(any)"]
             )
             uploaded.append(result["$id"])
