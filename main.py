@@ -144,7 +144,7 @@ class FunTargetAPIClient:
             # Check content type
             ctype = resp.headers.get("Content-Type", "")
             print("→ Content-Type:", ctype)
-            if "application/json" not in ctype:
+            if "text/html" not in ctype:
                 raise RuntimeError(f"Non-JSON response: {resp.text[:200]!r}")
             
             # Safe JSON parse
