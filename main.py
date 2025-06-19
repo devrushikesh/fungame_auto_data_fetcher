@@ -219,7 +219,7 @@ def main(context):
                 bucket_id=bucket,
                 file_id=file_id,
                 file=InputFile.from_bytes(payload, file_id),
-                permissions=["read(any)"]
+                permissions=["read(\"any\")"]
             )
             context.log("✅ Uploaded", file_id, "=>", res["$id"])
             uploaded.append(res["$id"])
