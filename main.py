@@ -5,6 +5,7 @@ import os, json, requests
 from appwrite.client import Client
 from appwrite.services.storage import Storage
 from appwrite.input_file import InputFile
+from termcolor import colored
 
 
 
@@ -101,13 +102,13 @@ class AuthClient:
         response = self.session.post("https://www.playrep.pro/Login.mvc", data=payload)
 
         print("Status code:", response.status_code)
-        print(self.session_id)
 
 
 class FunTargetAPIClient:
     BASE_URL = "https://playrep.pro"
     
     def __init__(self, session_id):
+        print("now we are in fun target api client")
         self.session = requests.Session()
         self.session.headers.update({
             "Host": "playrep.pro",
@@ -130,6 +131,7 @@ class FunTargetAPIClient:
 
     def _post(self, endpoint: str):
         url = f"{self.BASE_URL}{endpoint}"
+        print(colored(f"Making api request to {url}", "magenta"))
         referer_url = f"{self.BASE_URL}{endpoint.replace('Data', '')}"
         self.session.headers.update({"Referer": referer_url})
         response = self.session.post(url, json={})
@@ -173,7 +175,6 @@ def fetch_and_extract(url, session_id: str):
     api_resp = requests.post("https://api.ocr.space/parse/image", files=files, data=data)
     api_resp.raise_for_status()
     result = api_resp.json()
-    print(result)
 
     if result.get("IsErroredOnProcessing"):
         raise RuntimeError(result.get("ErrorMessage", "OCR.space error"))
@@ -198,15 +199,21 @@ def main(context):
         auth = AuthClient()
         sid = auth.get_session_id()
         # context.log("👉 SessionId:", sid)
+        print(colored(f"Session ID Generated : {sid}", "yellow"))
+        print(colored("Authentication Phase Completed!","blue"))
+
+
+        print(colored("Calling api client...","blue"))
 
         fun = FunTargetAPIClient(sid)
+
         data = {
             "fun_target": fun.get_fun_target_data(),
             "fun_ab": fun.get_fun_ab_data(),
             "fun_triple": fun.get_triple_fun_data(),
             "fun_rollet": fun.get_fun_roullet_data()
         }
-        
+
 
         now = datetime.now().strftime("%Y%m%dT%H%M%SZ")
         bucket = os.getenv("BUCKET_ID")
@@ -220,11 +227,11 @@ def main(context):
                 file=InputFile.from_bytes(payload, file_id),
                 permissions=["read(\"any\")"]
             )
-            # context.log("✅ Uploaded", file_id, "=>", res["$id"])
+            context.log("✅ Uploaded", file_id, "=>", res["$id"])
             uploaded.append(res["$id"])
         return context.res.json({"status": "success", "uploaded": uploaded})
     except Exception as e:
-        # context.error("❌ Error occurred:", str(e))
+        context.error("❌ Error occurred:", str(e))
         return context.res.json({"status": "error", "message": str(e)}, 500)
     
 # if __name__ == "__main__":
