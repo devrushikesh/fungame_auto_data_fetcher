@@ -2,8 +2,8 @@
 
 from datetime import datetime
 import os, json, requests
-from auth import AuthClient
-from automator import FunTargetAPIClient
+from .auth import AuthClient
+from .automator import FunTargetAPIClient
 from appwrite.client import Client
 from appwrite.services.storage import Storage
 from appwrite.input_file import InputFile
@@ -14,7 +14,7 @@ from appwrite.input_file import InputFile
 client = Client()
 client.set_endpoint(os.getenv("APPWRITE_FUNCTION_ENDPOINT"))
 client.set_project(os.getenv("APPWRITE_FUNCTION_PROJECT_ID"))
-client.set_key(os.getenv("APPWRITE_FUNCTION_API_KEY"))  # key provided automatically
+client.set_key(os.getenv("APPWRITE_FUNCTION_API_KEY")) 
 storage = Storage(client)
 
 def main(req, res):
