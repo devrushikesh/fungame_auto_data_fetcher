@@ -130,13 +130,17 @@ class FunTargetAPIClient:
         })
 
     def _post(self, endpoint: str):
-        url = f"{self.BASE_URL}{endpoint}"
-        print(colored(f"Making api request to {url}", "magenta"))
-        referer_url = f"{self.BASE_URL}{endpoint.replace('Data', '')}"
-        self.session.headers.update({"Referer": referer_url})
-        response = self.session.post(url, json={})
-        response.raise_for_status()
-        return response.json()
+        try:
+            url = f"{self.BASE_URL}{endpoint}"
+            print(colored(f"Making api request to {url}", "magenta"))
+            referer_url = f"{self.BASE_URL}{endpoint.replace('Data', '')}"
+            self.session.headers.update({"Referer": referer_url})
+            response = self.session.post(url, json={})
+            print("The api response status code : ", response.status_code)
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            print("There is the error while fetching data: ", e)
 
     def get_fun_target_data(self):
         return self._post("/DrawDetails.mvc/FunTargetData")
