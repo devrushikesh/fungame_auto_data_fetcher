@@ -101,8 +101,6 @@ class AuthClient:
         response = self.session.post("https://www.playrep.pro/Login.mvc", data=payload)
 
         print("Status code:", response.status_code)
-        print(response.text)
-
         print(self.session_id)
 
 
@@ -199,7 +197,7 @@ def main(context):
     try:
         auth = AuthClient()
         sid = auth.get_session_id()
-        context.log("👉 SessionId:", sid)
+        # context.log("👉 SessionId:", sid)
 
         fun = FunTargetAPIClient(sid)
         data = {
@@ -208,6 +206,7 @@ def main(context):
             "fun_triple": fun.get_triple_fun_data(),
             "fun_rollet": fun.get_fun_roullet_data()
         }
+        
 
         now = datetime.now().strftime("%Y%m%dT%H%M%SZ")
         bucket = os.getenv("BUCKET_ID")
@@ -221,11 +220,11 @@ def main(context):
                 file=InputFile.from_bytes(payload, file_id),
                 permissions=["read(\"any\")"]
             )
-            context.log("✅ Uploaded", file_id, "=>", res["$id"])
+            # context.log("✅ Uploaded", file_id, "=>", res["$id"])
             uploaded.append(res["$id"])
         return context.res.json({"status": "success", "uploaded": uploaded})
     except Exception as e:
-        context.error("❌ Error occurred:", str(e))
+        # context.error("❌ Error occurred:", str(e))
         return context.res.json({"status": "error", "message": str(e)}, 500)
     
 # if __name__ == "__main__":
