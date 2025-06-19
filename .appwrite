@@ -1,0 +1,20 @@
+{
+    "projectId": "automate-fungame-data",
+    "projectName": "automate-fungame-data",
+    "functions": [
+        {
+            "$id": "automate-fungame-data",
+            "name": "automate-fungame-data",
+            "runtime": "python-3.12",
+            "path": "main.py",
+            "entrypoint": "main",
+            "ignore": [
+                "__pycache__",
+                ".vscode",
+                ".git",
+                "test.png"
+            ],
+            "execute": []
+        }
+    ]
+}

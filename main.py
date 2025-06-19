@@ -1,9 +1,20 @@
 # main.py
 
 from datetime import datetime
-import os, json, requests
-from .auth import AuthClient
-from .automator import FunTargetAPIClient
+import os
+import json
+import requests
+import sys
+import importlib.util
+
+# Add the current directory to the Python path to ensure imports work in Appwrite Cloud Functions
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+
+# Import local modules
+from auth import AuthClient
+from automator import FunTargetAPIClient
+
+# Appwrite SDK imports
 from appwrite.client import Client
 from appwrite.services.storage import Storage
 from appwrite.input_file import InputFile

@@ -1,0 +1,16 @@
+{
+    "$id": "automate-fungame-data",
+    "name": "automate-fungame-data",
+    "runtime": "python-3.12",
+    "execute": [],
+    "events": [],
+    "timeout": 15,
+    "enabled": true,
+    "logging": true,
+    "entrypoint": "index.py",
+    "commands": "pip install -r requirements.txt",
+    "version": "1.0.0",
+    "schedule": "",
+    "webHooks": [],
+    "path": "index.py"
+}
