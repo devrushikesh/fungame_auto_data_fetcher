@@ -2,8 +2,6 @@
 
 from datetime import datetime
 import os, json, requests
-from auth import AuthClient
-from automator import FunTargetAPIClient
 from appwrite.client import Client
 from appwrite.services.storage import Storage
 from appwrite.input_file import InputFile
