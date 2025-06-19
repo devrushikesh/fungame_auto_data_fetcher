@@ -196,38 +196,31 @@ def fetch_and_extract(url, session_id: str):
 # ... [Include your AuthClient, FunTargetAPIClient, fetch_and_extract logic here] ...
 
 def main(context):
-    context.log("Function starting...")
-
+    context.log("🔧 Function start")
     try:
-        authclient = AuthClient()
-        session_id = authclient.get_session_id()
-        fun_client = FunTargetAPIClient(session_id)
+        auth = AuthClient()
+        sid = auth.get_session_id()
+        context.log("👉 SessionId:", sid)
 
-        data = {
-            "fun_target": fun_client.get_fun_target_data(),
-            "fun_roullet": fun_client.get_fun_roullet_data(),
-            "triple_fun": fun_client.get_triple_fun_data(),
-            "fun_ab": fun_client.get_fun_ab_data()
-        }
+        fun = FunTargetAPIClient(sid)
+        data = {k: getattr(fun, f"get_{k}_data")()() for k in 
+                ['fun_target', 'fun_roullet', 'triple_fun', 'fun_ab']}
 
         now = datetime.now().strftime("%Y%m%dT%H%M%SZ")
-        bucket_id = os.getenv("BUCKET_ID")
+        bucket = os.getenv("BUCKET_ID")
         uploaded = []
-
         for key, value in data.items():
-            json_bytes = json.dumps(value, indent=4).encode("utf-8")
+            payload = json.dumps(value, indent=4).encode('utf-8')
             file_id = f"{key}_{now}.json"
-            result = storage.create_file(
-                bucket_id=bucket_id,
+            res = storage.create_file(
+                bucket_id=bucket,
                 file_id=file_id,
-                file=InputFile.from_bytes(json_bytes, file_id),
+                file=InputFile.from_bytes(payload, file_id),
                 permissions=["read(any)"]
             )
-            uploaded.append(result["$id"])
-            context.log(f"Uploaded {file_id} -> {result['$id']}")
-
+            context.log("✅ Uploaded", file_id, "=>", res["$id"])
+            uploaded.append(res["$id"])
         return context.res.json({"status": "success", "uploaded": uploaded})
-
     except Exception as e:
-        context.error(f"Error: {str(e)}")
+        context.error("❌ Error occurred:", str(e))
         return context.res.json({"status": "error", "message": str(e)}, 500)
