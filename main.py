@@ -194,7 +194,7 @@ def fetch_and_extract(url, session_id: str):
 
 def main(req, res):
 
-
+    print("calling")
     res.log("ENDPOINT:", os.getenv("APPWRITE_FUNCTION_ENDPOINT"))
     res.log("PROJECT_ID:", os.getenv("APPWRITE_FUNCTION_PROJECT_ID"))
     res.log("API_KEY:", os.getenv("APPWRITE_FUNCTION_API_KEY"))
