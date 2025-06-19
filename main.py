@@ -7,6 +7,9 @@ from appwrite.services.storage import Storage
 from appwrite.input_file import InputFile
 
 
+
+
+
 OCR_SPACE_KEY = os.getenv("OCR_SPACE_KEY", "helloworld")  # Use your own key for production
 
 
@@ -190,6 +193,11 @@ def fetch_and_extract(url, session_id: str):
 
 
 def main(req, res):
+
+
+    res.log("ENDPOINT:", os.getenv("APPWRITE_FUNCTION_ENDPOINT"))
+    res.log("PROJECT_ID:", os.getenv("APPWRITE_FUNCTION_PROJECT_ID"))
+    res.log("API_KEY:", os.getenv("APPWRITE_FUNCTION_API_KEY"))
     # Your existing data-fetch logic
     authclient = AuthClient()
     session_id = authclient.get_session_id()
