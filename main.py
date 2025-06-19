@@ -9,10 +9,6 @@ from appwrite.services.storage import Storage
 from appwrite.input_file import InputFile
 
 
-import easyocr
-
-
-
 
 # Initialize Appwrite SDK
 client = Client()
@@ -38,7 +34,6 @@ def main(req, res):
     bucket_id = os.getenv("BUCKET_ID")
     uploaded = []
 
-    print(data["fun_ab"])
 
     for key, value in data.items():
         json_bytes = json.dumps(value, indent=4).encode("utf-8")
@@ -55,3 +50,16 @@ def main(req, res):
     return res.json({"status": "success", "uploaded": uploaded})
 
 
+# if __name__ == "__main__":
+
+#     authclient = AuthClient()
+#     session_id = authclient.get_session_id()
+#     fun_client = FunTargetAPIClient(session_id)
+
+#     data = {
+#         "fun_target": fun_client.get_fun_target_data(),
+#         "fun_roullet": fun_client.get_fun_roullet_data(),
+#         "triple_fun": fun_client.get_triple_fun_data(),
+#         "fun_ab": fun_client.get_fun_ab_data()
+#     }
+#     print(data["fun_ab"])

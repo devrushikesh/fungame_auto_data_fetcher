@@ -1,40 +1,39 @@
-import requests
-import io
-import easyocr
 import os
+import requests
 
-
-MODEL_DIR = './easyocr_models'
-download = not os.path.isdir(MODEL_DIR)
-
-reader = easyocr.Reader(
-    ['en'],
-    gpu=False,
-    verbose=False,
-    model_storage_directory='./easyocr_models',
-    download_enabled=download
-)
+OCR_SPACE_KEY = os.getenv("OCR_SPACE_KEY", "helloworld")  # Use your own key for production
 
 def fetch_and_extract(url, session_id: str):
-    headers = {
-        "Cookie": f"ASP.NET_SessionId={session_id}",
-        "User-Agent": "Mozilla/5.0",
-        "Accept": "image/avif,image/webp,image/apng,image/*,*/*;q=0.8"
-    }
-    resp = requests.get(url, headers=headers)
+    # Download the image with proper session cookie
+    resp = requests.get(url, cookies={"ASP.NET_SessionId": session_id})
     resp.raise_for_status()
 
-    # Read image bytes directly
-    img_bytes = io.BytesIO(resp.content).read()
+    # Prepare file payload with a suggested filename to set content type
+    files = {
+        "file": ("captcha.png", resp.content, "image/png")
+    }
 
-    # OCR lookup
-    results = reader.readtext(img_bytes, detail=0)
+    data = {
+        "apikey": OCR_SPACE_KEY,
+        "language": "eng",
+        "isOverlayRequired": False,
+        "detectOrientation": True,
+        "scale": True,
+        "OCREngine": 2  # Better for numeric captcha accuracy
+    }
 
-    # Filter digits
-    digits = ''.join([s for s in results if s.isdigit()])
+    api_resp = requests.post("https://api.ocr.space/parse/image", files=files, data=data)
+    api_resp.raise_for_status()
+    result = api_resp.json()
+
+    if result.get("IsErroredOnProcessing"):
+        raise RuntimeError(result.get("ErrorMessage", "OCR.space error"))
+
+    text = result["ParsedResults"][0]["ParsedText"]
+    digits = ''.join(ch for ch in text if ch.isdigit())
+
     print(f"OCR '{url}' → {digits}")
     return digits
-
 
 class AuthClient:
 
