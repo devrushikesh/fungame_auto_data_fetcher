@@ -6,17 +6,8 @@ from appwrite.client import Client
 from appwrite.services.storage import Storage
 from appwrite.input_file import InputFile
 from termcolor import colored
+import boto3
 
-
-
-
-
-# # Init Appwrite SDK
-client = Client() \
-    .set_endpoint(os.getenv("APPWRITE_FUNCTION_ENDPOINT")) \
-    .set_project(os.getenv("APPWRITE_FUNCTION_PROJECT_ID")) \
-    .set_key(os.getenv("APPWRITE_FUNCTION_API_KEY"))
-storage = Storage(client)
 
 class AuthClient:
 
@@ -203,73 +194,51 @@ def fetch_and_extract(url, session_id: str):
     print(f"OCR '{url}' → {digits}")
     return digits
 
-
-
-
-
-
-
-# ... [Include your AuthClient, FunTargetAPIClient, fetch_and_extract logic here] ...
-
-def main(context):
-    context.log("🔧 Function start")
+def lambda_handler(event, context):
     try:
+        # Init S3 client
+        s3 = boto3.client('s3')
+        bucket_name = "fungame-lambda-data-bucket"  # 🔁 Replace with your actual S3 bucket name
+
+        # Current timestamp
+        now = datetime.now().strftime("%Y%m%dT%H%M%SZ")
+
+        # Auth & Session
         auth = AuthClient()
         sid = auth.get_session_id()
-        # context.log("👉 SessionId:", sid)
-        print(colored(f"Session ID Generated : {sid}", "yellow"))
-        print(colored("Authentication Phase Completed!","blue"))
-
-
-        print(colored("Calling api client...","blue"))
-
         fun = FunTargetAPIClient(sid)
 
-        data = {
-            "fun_target": fun.get_fun_target_data(),
-            "fun_ab": fun.get_fun_ab_data(),
-            "fun_triple": fun.get_triple_fun_data(),
-            "fun_rollet": fun.get_fun_roullet_data()
+        # Prepare data
+        files = {
+            "funtarget": fun.get_fun_target_data(),
+            "funab": fun.get_fun_ab_data(),
+            "funtriple": fun.get_triple_fun_data(),
+            "funrollet": fun.get_fun_roullet_data()
         }
 
-
-        now = datetime.now().strftime("%Y%m%dT%H%M%SZ")
-        bucket = os.getenv("BUCKET_ID")
-        uploaded = []
-        for key, value in data.items():
-            payload = json.dumps(value, indent=4).encode('utf-8')
-            file_id = f"{key}_{now}.json"
-            res = storage.create_file(
-                bucket_id=bucket,
-                file_id=file_id,
-                file=InputFile.from_bytes(payload, file_id),
-                permissions=["read(\"any\")"]
+        # Upload each data as JSON to S3
+        for folder, data in files.items():
+            key = f"{folder}/{now}.json"
+            print(f"Uploading {key}...")
+            s3.put_object(
+                Bucket=bucket_name,
+                Key=key,
+                Body=json.dumps(data),
+                ContentType="application/json"
             )
-            context.log("✅ Uploaded", file_id, "=>", res["$id"])
-            uploaded.append(res["$id"])
-        return context.res.json({"status": "success", "uploaded": uploaded})
+
+        return {
+            "statusCode": 200,
+            "body": json.dumps({
+                "message": "All files uploaded successfully",
+                "timestamp": now,
+                "uploaded_keys": list(files.keys())
+            })
+        }
+
     except Exception as e:
-        context.error("❌ Error occurred:", str(e))
-        return context.res.json({"status": "error", "message": str(e)}, 500)
-    
-# if __name__ == "__main__":
-
-#     try:
-#         auth = AuthClient()
-#         sid = auth.get_session_id()
-
-#         fun = FunTargetAPIClient(sid)
-#         data = {
-#             "fun_target": fun.get_fun_target_data(),
-#             "fun_ab": fun.get_fun_ab_data(),
-#             "fun_triple": fun.get_triple_fun_data(),
-#             "fun_rollet": fun.get_fun_roullet_data()
-#         }
-
-#         now = datetime.now().strftime("%Y%m%dT%H%M%SZ")
-#         bucket = os.getenv("BUCKET_ID")
-#         uploaded = []
-#         print(data["fun_target"])
-       
-#     except Exception as e:
-#         print(e)
+        print("❌ Error in Lambda execution:", str(e))
+        return {
+            "statusCode": 500,
+            "body": json.dumps({"error": str(e)})
+        }
