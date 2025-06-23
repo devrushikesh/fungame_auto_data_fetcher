@@ -2,9 +2,6 @@
 
 from datetime import datetime
 import os, json, requests
-from appwrite.client import Client
-from appwrite.services.storage import Storage
-from appwrite.input_file import InputFile
 from termcolor import colored
 import boto3
 
